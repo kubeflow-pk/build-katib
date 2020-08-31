@@ -1,0 +1,15 @@
+dist: bionic
+
+env:
+  global:
+    - REGISTRY="aaaa"
+    - TAG=v0.9.0
+
+services:
+  - docker
+
+before_install:
+  - git clone -b ${TAG} --depth 1 https://github.com/kubeflow/katib.git
+
+script:
+  - cd katib
