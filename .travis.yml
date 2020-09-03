@@ -2,8 +2,13 @@ dist: bionic
 
 env:
   global:
-    - REGISTRY="aaaa"
+    - PREFIX=pkskubeflow
+    - REGISTRY="docker.io"
     - TAG=v0.9.0
+    - VERSION=v1beta1
+
+#arch:
+#  - arm64
 
 services:
   - docker
@@ -12,4 +17,5 @@ before_install:
   - git clone -b ${TAG} --depth 1 https://github.com/kubeflow/katib.git
 
 script:
-  - cd katib
+  - cd katib/scripts/${VERSION}
+  - ./build.sh -t ${TAG} -r ${REGISTRY} -p ${PREFIX}
