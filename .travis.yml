@@ -19,3 +19,16 @@ before_install:
 script:
   - cd katib/scripts/${VERSION}
   - ./build.sh -t ${TAG} -r ${REGISTRY} -p ${PREFIX}
+  - docker login -u ${DOCKER_USER} -p ${DOCKER_PWD}
+  - docker push ${REGISTRY}/${PREFIX}/katib-controller:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/katib-db-manager:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/katib-ui:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/file-metrics-collector:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/tfevent-metrics-collector:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/suggestion-hyperopt:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/suggestion-skopt:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/suggestion-chocolate:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/suggestion-enas:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/suggestion-hyperband:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/suggestion-goptuna:${TAG}
+  - docker push ${REGISTRY}/${PREFIX}/suggestion-darts:${TAG}
