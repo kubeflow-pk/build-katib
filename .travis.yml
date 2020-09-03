@@ -6,29 +6,41 @@ env:
     - REGISTRY="docker.io"
     - TAG=v0.9.0
     - VERSION=v1beta1
-
-arch:
-  - arm64
-
+    - CMD_PREFIX=cmd
 services:
   - docker
 
 before_install:
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=${TRAVIS_CPU_ARCH}] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce qemu-user-static
+  - wget https://github.com/docker/buildx/releases/download/v0.4.2/buildx-v0.4.2.linux-${TRAVIS_CPU_ARCH}
+  - chmod a+x buildx-v0.4.2.linux-${TRAVIS_CPU_ARCH}
+  - mkdir -p ~/.docker/cli-plugins
+  - mv buildx-v0.4.2.linux-${TRAVIS_CPU_ARCH} ~/.docker/cli-plugins/docker-buildx
+  - docker version
+  - docker buildx version
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - docker buildx create --use
+  - docker buildx inspect --bootstrap
   - git clone -b ${TAG} --depth 1 https://github.com/kubeflow/katib.git
 
 script:
   - cd katib/scripts/${VERSION}
   - ./build.sh -t ${TAG} -r ${REGISTRY} -p ${PREFIX}
   - docker login -u ${DOCKER_USER} -p ${DOCKER_PWD}
-  - docker push ${REGISTRY}/${PREFIX}/katib-controller:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/katib-db-manager:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/katib-ui:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/file-metrics-collector:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/tfevent-metrics-collector:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/suggestion-hyperopt:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/suggestion-skopt:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/suggestion-chocolate:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/suggestion-enas:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/suggestion-hyperband:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/suggestion-goptuna:${TAG}
-#  - docker push ${REGISTRY}/${PREFIX}/suggestion-darts:${TAG}
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/katib-controller:${TAG} -f ${CMD_PREFIX}/katib-controller/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/katib-db-manager:${TAG} -f ${CMD_PREFIX}/db-manager/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/katib-ui:${TAG} -f ${CMD_PREFIX}/ui/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/file-metrics-collector:${TAG} -f ${CMD_PREFIX}/metricscollector/${VERSION}/file-metricscollector/Dockerfile .
+  - docker buildx build --push --platform linux/arm64 -t ${REGISTRY}/${PREFIX}/tfevent-metrics-collector:${TAG} -f ${CMD_PREFIX}/metricscollector/${VERSION}/tfevent-metricscollector/Dockerfile.aarch64 .
+  - docker buildx build --push --platform linux/amd64 -t ${REGISTRY}/${PREFIX}/tfevent-metrics-collector:${TAG} -f ${CMD_PREFIX}/metricscollector/${VERSION}/tfevent-metricscollector/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/suggestion-hyperopt:${TAG} -f ${CMD_PREFIX}/suggestion/hyperopt/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/suggestion-skopt:${TAG} -f ${CMD_PREFIX}/suggestion/skopt/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/suggestion-chocolate:${TAG} -f ${CMD_PREFIX}/suggestion/chocolate/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/arm64 -t ${REGISTRY}/${PREFIX}/suggestion-enas:${TAG} -f ${CMD_PREFIX}/suggestion/nas/enas/${VERSION}/Dockerfile.aarch64 .
+  - docker buildx build --push --platform linux/amd64 -t ${REGISTRY}/${PREFIX}/suggestion-enas:${TAG} -f ${CMD_PREFIX}/suggestion/nas/enas/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/suggestion-hyperband:${TAG} -f ${CMD_PREFIX}/suggestion/hyperband/${VERSION}/Dockerfile .
+  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/suggestion-goptuna:${TAG} -f ${CMD_PREFIX}/suggestion/goptuna/${VERSION}/Dockerfile .
+#  - docker buildx build --push --platform linux/amd64,linux/arm64 -t ${REGISTRY}/${PREFIX}/suggestion-darts:${TAG} -f ${CMD_PREFIX}/suggestion/nas/darts/${VERSION}/Dockerfile .
