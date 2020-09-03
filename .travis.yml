@@ -7,8 +7,8 @@ env:
     - TAG=v0.9.0
     - VERSION=v1beta1
 
-#arch:
-#  - arm64
+arch:
+  - arm64
 
 services:
   - docker
@@ -31,4 +31,4 @@ script:
   - docker push ${REGISTRY}/${PREFIX}/suggestion-enas:${TAG}
   - docker push ${REGISTRY}/${PREFIX}/suggestion-hyperband:${TAG}
   - docker push ${REGISTRY}/${PREFIX}/suggestion-goptuna:${TAG}
-  - docker push ${REGISTRY}/${PREFIX}/suggestion-darts:${TAG}
+#  - docker push ${REGISTRY}/${PREFIX}/suggestion-darts:${TAG}
